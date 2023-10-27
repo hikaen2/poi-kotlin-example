@@ -12,6 +12,11 @@ repositories {
 
 dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation 'org.apache.commons:commons-csv:1.10.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.21.1'
+    implementation 'org.apache.poi:poi:5.2.4'
+    implementation 'org.apache.poi:poi-ooxml:5.2.4'
 }
 
 test {
@@ -24,4 +29,16 @@ kotlin {
 
 application {
     mainClassName = 'MainKt'
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Main-Class': 'MainKt'
+    }
+    from {
+        configurations.compileClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
 }
