@@ -28,26 +28,27 @@ fun main(args: Array<String>) {
         return
     }
 
-    val printer = CSVPrinter(BufferedWriter(OutputStreamWriter(System.out)), CSVFormat.DEFAULT)
-    val xlsxPackage = OPCPackage.open(File(args[0]).path, PackageAccess.READ)
-    val xssfReader = XSSFReader(xlsxPackage)
-    val sheetIterator = xssfReader.sheetsData as XSSFReader.SheetIterator
-    for (inputStream in sheetIterator) {
-        printer.printRecord(sheetIterator.sheetName)
-        XMLHelper.newXMLReader().apply {
-            contentHandler = XSSFSheetXMLHandler(
-                xssfReader.getStylesTable(),
-                null,
-                ReadOnlySharedStringsTable(xlsxPackage),
-                object : XSSFSheetXMLHandler.SheetContentsHandler {
-                    override fun startRow(rowNum: Int) = Unit
-                    override fun endRow(rowNum: Int) = printer.println()
-                    override fun cell(cellReference: String?, formattedValue: String?, comment: XSSFComment?) = printer.print(formattedValue)
-                },
-                DataFormatter(true),
-                false
-            )
-        }.parse(InputSource(inputStream))
+    OPCPackage.open(File(args[0]).path, PackageAccess.READ).use { xlsxPackage ->
+        val printer = CSVPrinter(BufferedWriter(OutputStreamWriter(System.out)), CSVFormat.DEFAULT)
+        val xssfReader = XSSFReader(xlsxPackage)
+        val sheetIterator = xssfReader.sheetsData as XSSFReader.SheetIterator
+        for (inputStream in sheetIterator) {
+            printer.printRecord(sheetIterator.sheetName)
+            XMLHelper.newXMLReader().apply {
+                contentHandler = XSSFSheetXMLHandler(
+                    xssfReader.getStylesTable(),
+                    null,
+                    ReadOnlySharedStringsTable(xlsxPackage),
+                    object : XSSFSheetXMLHandler.SheetContentsHandler {
+                        override fun startRow(rowNum: Int) = Unit
+                        override fun endRow(rowNum: Int) = printer.println()
+                        override fun cell(cellReference: String?, formattedValue: String?, comment: XSSFComment?) = printer.print(formattedValue)
+                    },
+                    DataFormatter(true),
+                    false
+                )
+            }.parse(InputSource(inputStream))
+        }
+        printer.flush()
     }
-    printer.flush()
 }
